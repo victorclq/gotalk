@@ -22,7 +22,7 @@ export function AppNav() {
     <header className="sticky top-0 z-10 backdrop-blur bg-background/80 border-b border-border">
       <div className="max-w-6xl mx-auto px-4 flex items-center justify-between h-14 gap-4">
         <Link href={withLang("/")} className="font-semibold text-lg tracking-tight shrink-0">
-          <span className="text-brand">Lingua</span>
+          <span className="text-brand">Go</span> Talk
         </Link>
 
         <nav className="flex items-center gap-1 overflow-x-auto">

@@ -1,4 +1,4 @@
-# Lingua — agent notes
+# Go Talk — agent notes
 
 Personal single-user language-learning app (Spanish, Italian, French → fluency). Next.js 16 + Neon + Drizzle + Tailwind v4 + Anthropic Claude API. Port 3100. No auth.
 

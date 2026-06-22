@@ -1,4 +1,4 @@
-# Lingua — ES · IT · FR fluency trainer
+# Go Talk — ES · IT · FR fluency trainer
 
 A personal, single-user web app to push Spanish, Italian, and French from a good base toward full fluency. Exercises, reading, and writing are done **in the app** and graded live by Claude; speaking practice happens elsewhere (an AI conversation) and you paste the evaluation back in to track it.
 
