@@ -18,6 +18,23 @@
   --fr: #6aa3f0;
 }
 
+html.light {
+  --background: #f6f7fb; /* soft off-white */
+  --surface: #ffffff;
+  --surface-2: #eef0f7;
+  --foreground: #1b1d2b;
+  --muted: #61647d;
+  --border: #e3e5f0;
+  --brand: #5b5be0;
+  --brand-strong: #4a4ad0;
+  --accent: #d97a0b;
+  --positive: #16a34a;
+  --negative: #dc2626;
+  --es: #c98a12;
+  --it: #2f9e57;
+  --fr: #3a78d0;
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-surface: var(--surface);

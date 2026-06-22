@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { LANG_LIST, SKILLS, isLang } from "@/lib/languages";
+import { ThemeToggle } from "./ThemeToggle";
 
 export function AppNav() {
   const pathname = usePathname();
@@ -45,6 +46,8 @@ export function AppNav() {
         </nav>
 
         <div className="flex items-center gap-1 shrink-0">
+          <ThemeToggle />
+          <span className="w-px h-5 bg-border mx-1" />
           {LANG_LIST.map((l) => {
             const href = `${pathname}?lang=${l.code}`;
             const active = activeLang === l.code;
