@@ -1,6 +1,7 @@
 import "server-only";
 import Anthropic from "@anthropic-ai/sdk";
 import { LANGUAGES, type LangCode, type Cefr, type Skill } from "./languages";
+import type { LearnerProfile } from "./data";
 
 const MODEL = process.env.ANTHROPIC_MODEL || "claude-opus-4-8";
 
@@ -366,6 +367,216 @@ export async function generateLesson(opts: {
     `Write a focused ${langLabel(language)} ${skill} mini-lesson at CEFR ${level} on: "${topic}".
 Return Markdown in "body": a short intro, the key rules or patterns with ${langLabel(language)} examples (and English glosses), common mistakes advanced learners make, and 2–3 quick self-check prompts at the end. Keep it tight and high-signal.`,
     LESSON_SCHEMA,
+    5000,
+  );
+}
+
+// ---------- Study sessions (1–2h guided lessons) ----------
+
+export interface StudySection {
+  title: string;
+  minutes: number;
+  type: "explanation" | "practice";
+  content: string; // markdown
+}
+
+export interface VideoSuggestion {
+  channel: string; // a real, well-known YouTube channel for this language
+  searchQuery: string; // a specific search to run on that channel/topic
+  why: string; // what to focus on while watching
+}
+
+export interface StudySession {
+  title: string;
+  focus: string;
+  focusRationale: string; // why this focus, grounded in the learner's history
+  primarySkill: Skill;
+  estimatedMinutes: number;
+  objectives: string[];
+  sections: StudySection[];
+  exercises: ExerciseItem[];
+  videos: VideoSuggestion[];
+  selfCheck: string[];
+  nextFocus: string;
+}
+
+const STUDY_SCHEMA = {
+  type: "object",
+  additionalProperties: false,
+  properties: {
+    title: { type: "string" },
+    focus: { type: "string" },
+    focusRationale: { type: "string" },
+    primarySkill: {
+      type: "string",
+      enum: ["grammar", "vocabulary", "reading", "writing", "speaking"],
+    },
+    estimatedMinutes: { type: "integer" },
+    objectives: { type: "array", items: { type: "string" } },
+    sections: {
+      type: "array",
+      items: {
+        type: "object",
+        additionalProperties: false,
+        properties: {
+          title: { type: "string" },
+          minutes: { type: "integer" },
+          type: { type: "string", enum: ["explanation", "practice"] },
+          content: { type: "string" },
+        },
+        required: ["title", "minutes", "type", "content"],
+      },
+    },
+    exercises: {
+      type: "array",
+      items: {
+        type: "object",
+        additionalProperties: false,
+        properties: {
+          id: { type: "integer" },
+          kind: {
+            type: "string",
+            enum: ["multiple_choice", "fill_blank", "transform", "translate"],
+          },
+          prompt: { type: "string" },
+          options: { type: "array", items: { type: "string" } },
+          answer: { type: "string" },
+          explanation: { type: "string" },
+        },
+        required: ["id", "kind", "prompt", "answer", "explanation"],
+      },
+    },
+    videos: {
+      type: "array",
+      items: {
+        type: "object",
+        additionalProperties: false,
+        properties: {
+          channel: { type: "string" },
+          searchQuery: { type: "string" },
+          why: { type: "string" },
+        },
+        required: ["channel", "searchQuery", "why"],
+      },
+    },
+    selfCheck: { type: "array", items: { type: "string" } },
+    nextFocus: { type: "string" },
+  },
+  required: [
+    "title",
+    "focus",
+    "focusRationale",
+    "primarySkill",
+    "estimatedMinutes",
+    "objectives",
+    "sections",
+    "exercises",
+    "videos",
+    "selfCheck",
+    "nextFocus",
+  ],
+};
+
+function profileSummary(p: LearnerProfile): string {
+  const skills = p.skillScores.length
+    ? p.skillScores.map((s) => `${s.skill} avg ${s.avgScore}% over ${s.attempts}`).join("; ")
+    : "no graded work yet";
+  return JSON.stringify(
+    {
+      currentLevel: p.level,
+      targetLevel: p.targetLevel,
+      skillPerformance: skills,
+      recurringMistakes: p.weakCorrections,
+      priorNextStepsGiven: p.recentNextSteps,
+      vocab: p.vocab,
+      sessionsAlreadyStudied: p.recentTopics,
+      speakingPracticeCount: p.speakingLogs,
+    },
+    null,
+    2,
+  );
+}
+
+export async function generateStudySession(opts: {
+  profile: LearnerProfile;
+  focus?: string;
+}): Promise<StudySession> {
+  const { profile, focus } = opts;
+  const language = profile.language;
+  const focusLine = focus
+    ? `The learner asked to focus on: "${focus}". Build the session around that.`
+    : `No topic was given — YOU choose the highest-value focus for this learner based on their history below (target their weakest skills and recurring mistakes; avoid topics already covered unless they're still weak). Explain the choice in focusRationale.`;
+
+  return generateJSON<StudySession>(
+    `Design a complete ${langLabel(language)} self-study session of about 60–120 minutes for an advanced learner at CEFR ${profile.level}, working toward ${profile.targetLevel}.
+${focusLine}
+
+LEARNER PROFILE (everything the app knows from their past work — use it to personalise):
+${profileSummary(profile)}
+
+Produce a structured session:
+- objectives: concrete "by the end you can…" outcomes.
+- sections: timed blocks (sum roughly to estimatedMinutes). Use type "explanation" for teaching (Markdown, with ${langLabel(language)} examples + English glosses) and type "practice" for active tasks the learner does themselves (shadowing, writing, etc.).
+- exercises: 6–10 gradeable items (mix of multiple_choice with 3–4 options, fill_blank using "___", transform, translate) at level ${profile.level}, each with the canonical answer and a short English explanation. Target the learner's weak spots.
+- videos: 2–3 suggestions for NATIVE, real-life speaking. Use REAL, well-known ${langLabel(language)} YouTube channels (e.g. comprehensible-input / street-interview / podcast channels). Give the channel name, a specific search query to find relevant content, and what to focus on. Do NOT invent specific video URLs.
+- selfCheck: a few questions the learner answers to confirm they met the objectives.
+- nextFocus: what they should study next after this.`,
+    STUDY_SCHEMA,
+    12000,
+  );
+}
+
+// ---------- Study guidance (roadmap to fluency) ----------
+
+export interface StudyGuidance {
+  summary: string;
+  focusAreas: { area: string; why: string }[];
+  milestones: { level: string; target: string }[];
+  weeklyPlan: string;
+}
+
+const GUIDANCE_SCHEMA = {
+  type: "object",
+  additionalProperties: false,
+  properties: {
+    summary: { type: "string" },
+    focusAreas: {
+      type: "array",
+      items: {
+        type: "object",
+        additionalProperties: false,
+        properties: { area: { type: "string" }, why: { type: "string" } },
+        required: ["area", "why"],
+      },
+    },
+    milestones: {
+      type: "array",
+      items: {
+        type: "object",
+        additionalProperties: false,
+        properties: { level: { type: "string" }, target: { type: "string" } },
+        required: ["level", "target"],
+      },
+    },
+    weeklyPlan: { type: "string" },
+  },
+  required: ["summary", "focusAreas", "milestones", "weeklyPlan"],
+};
+
+export async function generateStudyGuidance(profile: LearnerProfile): Promise<StudyGuidance> {
+  const language = profile.language;
+  return generateJSON<StudyGuidance>(
+    `Act as a ${langLabel(language)} study coach. The learner is at CEFR ${profile.level} aiming for ${profile.targetLevel} (full fluency). Based on their history, lay out a personalised roadmap.
+
+LEARNER PROFILE:
+${profileSummary(profile)}
+
+Return:
+- summary: 2–3 sentences on where they are and what will move the needle most.
+- focusAreas: 3–5 specific things to prioritise now (area + why), grounded in their weak spots.
+- milestones: the remaining CEFR steps up to ${profile.targetLevel}, each with what mastering it looks like.
+- weeklyPlan: a realistic weekly study rhythm across grammar, vocab, reading, writing, speaking, and native-input video.`,
+    GUIDANCE_SCHEMA,
     5000,
   );
 }

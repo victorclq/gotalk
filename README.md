@@ -15,7 +15,7 @@ A personal, single-user web app to push Spanish, Italian, and French from a good
 | 📖 **Reading** | AI writes a level-appropriate passage; you explain what you understood in the target language → comprehension + language feedback. |
 | ✍️ **Writing** | AI gives a prompt; you write a response → graded corrections (grammar, vocab range, register). |
 | 🎙️ **Speaking** | Log AI conversation evaluations (paste the feedback) and track scores over time. |
-| 📚 **Lessons** | Ask for a focused mini-lesson on any topic; saved for re-reading. |
+| 📚 **Study** | Adaptive study coach. Generates a **1–2 hour guided session** built from your in-app history (past scores, weak skills, recurring mistakes): objectives, timed learn/practice sections, a graded exercise set, and native-speech **YouTube** suggestions. Also gives a **roadmap to fluency** (what to focus on next, milestones to C2). |
 
 Levels start at **ES B1 · IT B2 · FR C1** and target **C2**. Difficulty auto-scales to each language's current CEFR level (stored per language, editable in the DB).
 

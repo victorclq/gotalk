@@ -98,16 +98,24 @@ export const vocab = pgTable(
 );
 
 /**
- * AI-generated lessons & tips, kept so they can be browsed and re-read.
+ * AI-generated study sessions: a 1–2h guided lesson targeting the learner's
+ * weak areas (from their in-app history), with explanations, a gradeable
+ * exercise set, and native-speech video suggestions. `plan` holds the full
+ * structured session; `exerciseId` links the embedded gradeable drills.
  */
 export const lessons = pgTable("lessons", {
   id: serial("id").primaryKey(),
   language: text("language").notNull(),
-  skill: text("skill").notNull(), // grammar | vocabulary | reading | writing | speaking
+  skill: text("skill").notNull(), // primary skill focus
   level: text("level").notNull(),
-  topic: text("topic").notNull(),
+  topic: text("topic").notNull(), // the focus area
   title: text("title").notNull(),
-  body: text("body").notNull(), // markdown
+  body: text("body"), // legacy markdown (nullable; new sessions use `plan`)
+  plan: jsonb("plan"), // StudySession (objectives, sections, videos, …)
+  estimatedMinutes: integer("estimated_minutes"),
+  exerciseId: integer("exercise_id").references(() => exercises.id, {
+    onDelete: "set null",
+  }),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 

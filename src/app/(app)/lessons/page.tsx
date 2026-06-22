@@ -1,7 +1,7 @@
 import { getLevel, listLessons } from "@/lib/data";
 import { LANGUAGES, isLang, type LangCode } from "@/lib/languages";
 import { PageHeader } from "@/components/ui";
-import { LessonsClient, type LessonRow } from "@/components/LessonsClient";
+import { StudyClient, type SavedSession, type ClientPlan } from "@/components/StudyClient";
 
 export const dynamic = "force-dynamic";
 
@@ -14,23 +14,26 @@ export default async function LessonsPage({
   const lang: LangCode = isLang(sp.lang ?? "") ? (sp.lang as LangCode) : "es";
   const [level, rows] = await Promise.all([getLevel(lang), listLessons(lang)]);
 
-  const lessons: LessonRow[] = rows.map((l) => ({
-    id: l.id,
-    skill: l.skill,
-    level: l.level,
-    topic: l.topic,
-    title: l.title,
-    body: l.body,
-    createdAt: l.createdAt,
-  }));
+  const saved: SavedSession[] = rows
+    .filter((l) => l.plan)
+    .map((l) => ({
+      id: l.id,
+      title: l.title,
+      topic: l.topic,
+      level: l.level,
+      estimatedMinutes: l.estimatedMinutes,
+      createdAt: l.createdAt,
+      plan: l.plan as ClientPlan,
+      exerciseId: l.exerciseId,
+    }));
 
   return (
     <div>
       <PageHeader
-        title="📚 Lessons & tips"
-        subtitle={`${LANGUAGES[lang].name} · ${level} · AI mini-lessons on any topic`}
+        title="📚 Study"
+        subtitle={`${LANGUAGES[lang].name} · ${level} · guided 1–2h sessions tailored to your progress`}
       />
-      <LessonsClient lang={lang} level={level} lessons={lessons} />
+      <StudyClient defaultLang={lang} saved={saved} />
     </div>
   );
 }

@@ -6,7 +6,7 @@ Personal single-user language-learning app (Spanish, Italian, French → fluency
 - `src/db/schema.ts` — language_progress, exercises, attempts, vocab (SM-2), lessons, speaking_logs. `src/db/index.ts` is a lazy Drizzle/Neon client (don't connect at import — build-time page collection runs without DATABASE_URL).
 - `src/lib/ai.ts` — **server-only**. All Claude calls. Uses `output_config.format` (structured JSON) + adaptive thinking. Model from `ANTHROPIC_MODEL` (default `claude-opus-4-8`). Import its types into client components with `import type` only.
 - `src/lib/languages.ts` — LangCode (es|it|fr), CEFR, skills, per-language metadata. Client-safe.
-- `src/lib/data.ts` — server-only DB query helpers.
+- `src/lib/data.ts` — server-only DB query helpers, incl. `getLearnerProfile(lang)` which summarizes history (per-skill avg scores, recurring correction notes, vocab lapses, prior next-steps) for the study generator.
 - `src/lib/srs.ts` — SM-2 scheduler (grades: again/hard/good/easy).
 - `src/lib/api.ts` — client `postJSON` helper.
 - `src/app/(app)/*` — pages (server components, `force-dynamic`); read `?lang=` (es default). Each renders a client session component.
@@ -18,6 +18,12 @@ Personal single-user language-learning app (Spanish, Italian, French → fluency
 - Grading returns a `GradeResult` (score 0–100, summary, per-item corrections, strengths, nextSteps), rendered by `GradeFeedback`.
 - XP is bumped via `touchStudied()` after graded work.
 
+## Study sessions (the "Study" tab, route /lessons)
+- `lessons` rows store a structured `plan` (jsonb StudySession) + `estimatedMinutes` + `exerciseId`. `generateStudySession` (ai.ts) takes a `LearnerProfile` and returns objectives, timed sections, gradeable exercises, and YouTube video suggestions (real channel + search query — never invented video URLs).
+- The route `/api/study/session` persists the exercises as their own `exercises` row (answers server-side) and stores an answer-stripped plan in `lessons.plan`; the embedded drills grade via the shared `/api/exercises/grade`.
+- `/api/study/guidance` returns a roadmap (focus areas, milestones to C2, weekly plan). `StudyClient` + `ExerciseRunner` render it; `SessionView` is inside StudyClient.
+
 ## Gotchas
 - `db` is a Proxy — fine for queries; don't destructure methods off it before a request context exists.
 - Speaking is paste-in only (no AI call); everything else grades live.
+- YouTube links go to `youtube.com/results?search_query=` (channel + query) — an LLM can't produce reliable specific video IDs.

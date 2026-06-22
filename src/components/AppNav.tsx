@@ -14,7 +14,7 @@ export function AppNav() {
   const nav = [
     { href: "/", label: "Dashboard", icon: "🏠" },
     ...SKILLS.map((s) => ({ href: `/${s.key}`, label: s.label, icon: s.icon })),
-    { href: "/lessons", label: "Lessons", icon: "📚" },
+    { href: "/lessons", label: "Study", icon: "📚" },
   ];
 
   const withLang = (href: string) => `${href}?lang=${activeLang}`;
