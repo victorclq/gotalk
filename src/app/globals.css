@@ -1,0 +1,50 @@
+@import "tailwindcss";
+
+:root {
+  --background: #0e0f1a; /* deep ink */
+  --surface: #181a2b;
+  --surface-2: #20233a;
+  --foreground: #f3f3fb;
+  --muted: #9a9cb8;
+  --border: #2c2f48;
+  --brand: #7c7cf0; /* periwinkle */
+  --brand-strong: #5b5be0;
+  --accent: #f7a23b; /* amber */
+  --positive: #4ade80;
+  --negative: #f87171;
+  /* per-language accents */
+  --es: #f4b942;
+  --it: #5fc77f;
+  --fr: #6aa3f0;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-border: var(--border);
+  --color-brand: var(--brand);
+  --color-brand-strong: var(--brand-strong);
+  --color-accent: var(--accent);
+  --color-positive: var(--positive);
+  --color-negative: var(--negative);
+  --color-es: var(--es);
+  --color-it: var(--it);
+  --color-fr: var(--fr);
+  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* subtle scrollbars */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
